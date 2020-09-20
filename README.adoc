@@ -4,8 +4,16 @@
 
 `🍰 vaupie` implements the https://github.com/gematik/api-erp/blob/master/docs/authentisieren.adoc#verschlüsselter-transportkanal-zur-vertrauenswürdigen-ausführungsumgebung-vau-transport[gematik VAU protocol] for ePrescription. It is designed to be used in combination with https://httpie.org[HTTPie] and https://github.com/gematik/ref-eRp-FD-Server[gematik reference implementation ePrescription Server]. 
 
-`HTTPie` provides the `--offline` option, which enables us to generate any HTTP-Request which is then encrypted by the `🍰 vaupie` and sent to the eRezept service like that:
+`HTTPie` provides the `--offline` option which enables the following flow:
+[square]
+- `HTTPie` generates the HTTP-Reqiest and prints it to `stdout`
+- `🍰 vaupie` reads the HTTP-Request from `stdin` 
+- `🍰 vaupie` encrypts the HTTP-Request according to https://fachportal.gematik.de/fachportal-import/files/gemSpec_Krypt_V2.17.0.pdf[gemSpecKrypt], Kapitel 7.
+- `🍰 vaupie` sends the encrypted request to server
+- `🍰 vaupie` receives encrypted response from server and decrypts it
+_ `🍰 vaupie` displays the plaintext response to `stdout`
 
+.In Short:
 [source,bash]
 ----
 http --offline get vau/Task "`./vau.py auth`"|./vau.py req
@@ -49,23 +57,35 @@ cargo run -p ref-erx-fd-server -- --vau-key vau-key.pem --vau-cert vau-cert.pem
 http localhost:3000/VAUCertificate|openssl x509 -inform der -text
 ----
 
-== Virtual environment
+== Run `🍰 vaupie`
 
+.Initialise Python virtualenv
 [source,bash]
 ----
 source venv.sh
 ----
 
 
-== Initialise the VAU state
+.Initialise the VAU state
 [source,bash]
 ----
-./vau.py init http://localhost:3000/ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+# ./vau.py init <VAU ENDPOINT> <JWT AUTH TOKEN>
+# WARNING: due to a bug the server will not work if you provide the real JWT. the Token must be any HEX value.
+./vau.py init http://localhost:3000/ AAAA0000
 ----
 
-== Perform request
+.Get all Tasks
 [source,bash]
 ----
 http --offline get vau/Task "`./vau.py auth`"|./vau.py req
 ----
 
+----
+HTTP/1.1 200 OK
+content-length: 71
+connection: close
+content-type: application/fhir+xml
+date: Sun, 20 Sep 2020 15:41:52 GMT
+
+<Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>
+----

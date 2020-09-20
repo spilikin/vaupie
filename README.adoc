@@ -1,0 +1,31 @@
+= 🍰 vaupie: Command line VAU client
+
+= About
+
+`🍰 vaupie` implements the https://github.com/gematik/api-erp/blob/master/docs/authentisieren.adoc#verschlüsselter-transportkanal-zur-vertrauenswürdigen-ausführungsumgebung-vau-transport[gematik VAU protocol] for ePrescription. It is designed to be used in combination with https://httpie.org[HTTPie] and https://github.com/gematik/ref-eRp-FD-Server[gematik reference implementation ePrescription Server]. 
+
+`HTTPie`provides the `--offline` option, which enables us to generate any HTTP-Request which is then encrypted by the `🍰 vaupie` and sent to the eRezept service.
+
+= Usage
+
+== Virtual environment
+
+[source,bash]
+----
+source venv.sh
+----
+
+
+
+== Initialise the VAU state
+[source,bash]
+----
+./vau.py init http://localhost:3000/ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+----
+
+== Perform request
+[source,bash]
+----
+http --offline get vau/Task "`./vau.py auth`"|./vau.py req
+----
+

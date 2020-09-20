@@ -6,7 +6,7 @@
 
 `HTTPie` provides the `--offline` option which enables the following flow:
 [square]
-- `HTTPie` generates the HTTP-Reqiest and prints it to `stdout`
+- `HTTPie` generates the HTTP-Request and prints it to `stdout`
 - `vaupie` reads the HTTP-Request from `stdin` 
 - `vaupie` encrypts the HTTP-Request according to https://fachportal.gematik.de/fachportal-import/files/gemSpec_Krypt_V2.17.0.pdf[gemSpecKrypt], Kapitel 7.
 - `vaupie` sends the encrypted request to server

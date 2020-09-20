@@ -80,6 +80,7 @@ source venv.sh
 http --offline get vau/Task "`./vau.py auth`"|./vau.py req
 ----
 
+.🔥FHIR Response awaits you
 ----
 HTTP/1.1 200 OK
 content-length: 71

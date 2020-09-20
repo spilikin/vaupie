@@ -1,11 +1,13 @@
-# simple implementation of ICES
-# basen on example from https://bitbucket.org/andreas_hallof/vau-protokoll/src/master/erp/enc.py
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import secrets
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+
+# simple implementation of ICES
+# basen on example from https://bitbucket.org/andreas_hallof/vau-protokoll/src/master/erp/enc.py
 def encrypt(bob_public_key: ec.EllipticCurvePublicKey, tag: bytearray, plaintext: bytearray):
     private_key = ec.generate_private_key(ec.BrainpoolP256R1())
     public_key = private_key.public_key()
@@ -27,3 +29,8 @@ def encrypt(bob_public_key: ec.EllipticCurvePublicKey, tag: bytearray, plaintext
     y_str = format(pn.y, 'x').zfill(64)
 
     return b'\1'+bytes.fromhex(x_str)+bytes.fromhex(y_str)+iv+ciphertext
+
+def decrypt(response_key: bytes, ciphertext: bytes):
+    aesgcm = AESGCM(response_key)
+    iv = ciphertext[0:12]
+    return aesgcm.decrypt(ciphertext[0:12], ciphertext[12:], None)

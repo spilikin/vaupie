@@ -8,7 +8,7 @@ from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from vaupy.state import State, EndpointState, RequestState, StateVersionError
-import vaupy.ecies as ecies
+import vaupy.crypto as crypto
 import io
 import re
 
@@ -58,7 +58,7 @@ def request(state: State):
 
     cert = x509.load_der_x509_certificate(bytes.fromhex(state.endpoint.x509))
     vau_public_key = cert.public_key()
-    ecies_message = ecies.encrypt(vau_public_key, b'ecies-vau-transport', plaintext)
+    ecies_message = crypto.encrypt(vau_public_key, b'ecies-vau-transport', plaintext)
 
     vau_url = urllib.parse.urljoin(state.endpoint.base_url, f"VAU/{state.endpoint.userpseudonym}")
     response = requests.post(vau_url, data=ecies_message, headers={'Content-type': 'application/octet-stream'}, stream=True)
@@ -71,10 +71,7 @@ def request(state: State):
     state.endpoint.userpseudonym = response.headers['userpseudonym']
     state.save(STATE_FILENAME)
 
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    aesgcm = AESGCM(bytes.fromhex(response_key))
-    iv = ciphertext[0:12]
-    plaintext = aesgcm.decrypt(ciphertext[0:12], ciphertext[12:], None)
+    plaintext = crypto.decrypt(bytes.fromhex(response_key), ciphertext)
 
     firstline = io.BytesIO(plaintext).readline()
     plaintext = plaintext[len(firstline):]

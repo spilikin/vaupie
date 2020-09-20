@@ -4,9 +4,50 @@
 
 `🍰 vaupie` implements the https://github.com/gematik/api-erp/blob/master/docs/authentisieren.adoc#verschlüsselter-transportkanal-zur-vertrauenswürdigen-ausführungsumgebung-vau-transport[gematik VAU protocol] for ePrescription. It is designed to be used in combination with https://httpie.org[HTTPie] and https://github.com/gematik/ref-eRp-FD-Server[gematik reference implementation ePrescription Server]. 
 
-`HTTPie`provides the `--offline` option, which enables us to generate any HTTP-Request which is then encrypted by the `🍰 vaupie` and sent to the eRezept service.
+`HTTPie` provides the `--offline` option, which enables us to generate any HTTP-Request which is then encrypted by the `🍰 vaupie` and sent to the eRezept service like that:
+
+[source,bash]
+----
+http --offline get vau/Task "`./vau.py auth`"|./vau.py req
+----
 
 = Usage
+
+== Install and configure the server
+
+Install https://www.rust-lang.org/learn/get-started[Rust]
+
+.Clone repository from github
+[source,bash]
+----
+git clone https://github.com/gematik/ref-eRp-FD-Server.git
+cd ref-eRp-FD-Server
+----
+
+
+.Generate key pair and certificate usinf openssl 
+[source,bash]
+----
+# generate key pair for VAU
+openssl ecparam -name brainpoolP256r1 -genkey -out vau-key.pem
+# IMPORTANT: use 'localhost' as Common Name, you can leave other fields empty
+openssl req -new -x509 -key vau-key.pem -out vau-cert.pem -days 30
+# display the VAU certificate
+openssl x509 -in vau-cert.pem -text
+----
+
+.Start server 
+[source,bash]
+----
+cargo run -p ref-erx-fd-server -- --vau-key vau-key.pem --vau-cert vau-cert.pem
+----
+
+.Test if server works
+[source,bash]
+----
+# fetch VAU certificate from server and display it
+http localhost:3000/VAUCertificate|openssl x509 -inform der -text
+----
 
 == Virtual environment
 
@@ -14,7 +55,6 @@
 ----
 source venv.sh
 ----
-
 
 
 == Initialise the VAU state

@@ -6,7 +6,7 @@ import secrets
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
-# simple implementation of ICES
+# simple implementation of ECIES
 # basen on example from https://bitbucket.org/andreas_hallof/vau-protokoll/src/master/erp/enc.py
 def encrypt(bob_public_key: ec.EllipticCurvePublicKey, tag: bytearray, plaintext: bytearray):
     private_key = ec.generate_private_key(ec.BrainpoolP256R1())

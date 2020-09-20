@@ -63,6 +63,9 @@ def request(state: State):
     vau_url = urllib.parse.urljoin(state.endpoint.base_url, f"VAU/{state.endpoint.userpseudonym}")
     response = requests.post(vau_url, data=ecies_message, headers={'Content-type': 'application/octet-stream'}, stream=True)
 
+    if not response.ok:
+        exit(f"{response.status_code} {response.text}")
+
     ciphertext = response.raw.read()
 
     state.endpoint.userpseudonym = response.headers['userpseudonym']
@@ -82,7 +85,7 @@ def request(state: State):
 
 # Prints the Authorization HTTP Header to stdout
 def authorization(state: State):
-    print (f"Authorization:Bearer {state.endpoint.auth_token}")
+    sys.stdout.write (f"Authorization:Bearer {state.endpoint.auth_token}")
 
 
 parser = argparse.ArgumentParser(prog='vaupie', description='Perform VAU-Client commands')

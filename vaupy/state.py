@@ -2,8 +2,10 @@ from typing import List
 from collections import namedtuple
 import json
 from time import time
+from pathlib import Path
 
 STATE_VERSION=2
+STATE_FILENAME = f"{Path.home()}/.vaupy.json"
 
 class StateVersionError(Exception):
     pass
@@ -50,12 +52,12 @@ class State():
         self.version = version
         self.endpoint = endpoint
 
-    def save(self, filename):
+    def save(self, filename=STATE_FILENAME):
         with open(filename, "w") as f:
             json.dump(self, f, indent=2, cls=StateEncoder)
     
     @staticmethod
-    def load(filename):
+    def load(filename=STATE_FILENAME):
         with open(filename, "r") as f:
             state = json.load(f, object_hook=stateDecoder)
         return state

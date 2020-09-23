@@ -42,12 +42,16 @@ openssl ecparam -name brainpoolP256r1 -genkey -out vau-key.pem
 openssl req -new -x509 -key vau-key.pem -out vau-cert.pem -days 30
 # display the VAU certificate
 openssl x509 -in vau-cert.pem -text
+# generate test key pair for IdP
+openssl ecparam -name brainpoolP256r1 -genkey -out idp-private.pem
+openssl ec -in idp-private.pem -pubout -out idp-public.pem
+
 ----
 
 .Start server 
 [source,bash]
 ----
-cargo run -p ref-erx-fd-server -- --vau-key vau-key.pem --vau-cert vau-cert.pem
+cargo run -p ref-erx-fd-server -- --key vau-key.pem --cert vau-cert.pem --token file://./idp-public.pem
 ----
 
 .Test if server works
@@ -71,22 +75,38 @@ source venv.sh
 ----
 # ./vau.py init <VAU ENDPOINT> <JWT AUTH TOKEN>
 # WARNING: due to a bug the server will not work if you provide the real JWT. the Token must be any HEX value.
-./vau.py init http://localhost:3000/ AAAA0000
+./vau.py init http://localhost:3000/
 ----
 
 .Get all Tasks
 [source,bash]
 ----
-http --offline get vau/Task "`./vau.py auth`"|./vau.py req
+http --offline get vau/Task "`./vau.py auth`"|./vau.py req --verbose
 ----
 
 .🔥FHIR Response awaits you
 ----
+[vaupie] Verbose logging is on
+[vaupie] Plaintext VAU request:
+[vaupie] 1 0000 42ec0e2163c666cdd6dacdd85f2d6caa 293ddf94c6b1d002f528ae2af72059d2 GET /Task HTTP/1.1
+User-Agent: HTTPie/2.2.0
+Accept-Encoding: gzip, deflate
+Accept: */*
+Connection: keep-alive
+Authorization: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmRlLyIsImF1ZCI6Imh0dHBzOi8vcHJlc2NyaXB0aW9uc2VydmVyLnRlbGVtYXRpay8iLCJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjAwODg2MzkzLCJuYmYiOjE2MDA4ODYzOTIsImV4cCI6MTYwMDk3Mjc5Mywibm9uY2UiOiI3MGRiY2MyZjUxM2NhYjRiNDU4ODhiZGUzZjdjOGRhOCIsImFjciI6IjEiLCJwcm9mZXNzaW9uT0lEIjoiMS4yLjI3Ni4wLjc2LjQuNDkiLCJnaXZlbl9uYW1lIjoiTWFuZnJlZCIsImZhbWlseV9uYW1lIjoiTXVzdGVybWFubiIsIm9yZ2FuaXphdGlvbk5hbWUiOiJub25lIiwiaWROdW1tZXIiOiIwIiwianRpIjoiOTg3NDJjZDUtYjIwZC00MWY4LWIxMjYtNjdhZGFhODM4YTY2In0.WkHZTZhRShH6Vq7mw4FOeGnCsOV9ZJPd3SgPprtvqCI5chlYeu0Y3e6BDYY_EUAB4PfXmRiMZpmthZ_Hqayx_Q
+Host: vau
+
+
+[vaupie] Ciphertext: 019ec12ae4e89e934cb7acf120fcd0da3eac9272fe14941c404aa6b7c23d2b4ed203be8a7029b93a8eb86b3f71b319d6bf1d6213b375751a54f21c81eafd693478e88c0948305c2529f0e19a0ee213c7994553e4cea5d30e3b86d498625488a6c1e748b126ad836acbad62e5abe7a06a41f6cc987fa4fe9990529ab964c3724960700b5f2e9d305bb81f238b80ff98b9ff6f57446f92faa18cee3b8904bfe812220c3db8390c678b2ef7c4b7d90bb45314bc0b3d6dd9a358d023aa0580bc5036381f939e16f7f9c31f453168675181aac05c8cc616aee2c513f5f8e73e7d565a1eac7de3489d2344d7a724f8956a9c9a6f0c442fffff0da7861f517a628a79855292aa491d31022f565b974ed0f0752310a585fb3c183da5cb0fdf59e31f0a7fa5c80aca32fef389eae453ed00378d5fe4d35770c5b01424871f60e39df63e1308d721c43c92ca7ddb2bcd32b33ec2f2dbb2a04719c71bd48e6b5df42cf167c32ff549772e7cfac648f23e90736d8a543ecced3e9552245ec376dcceed3a8d09200bc3916e44c208587bffc33a2c089df10bdeb6b88c4275746f7c5cfce5bad54b5c8dd4401565f0d55b88aa686a3a623f08c7dc263e3c840462c8f0521a703388a7e3160e978f62200bf34566095ccb6af0a79dfd1d050517a104af0635fec951f9c5e06df89038f26bd464f33a5c6aff4dc31c67e6b8e2ffa68caf6dd9f021bc59671aa3c0c5806fca090310b8020e11a6a3059320ab0e5977bcbfe73ad2f9867b7e3e8543a18f13929a259b473482046da09078c558b1162ac70920f55f856121fc273a250dfdd4b664ad3fae45c0bf232e94bfdf2875fa52522a744eefbad44597b76616c2fec7d0fe2b950f5597424d4662e844af8351a429d7cf3c780510930e7754206de6aa04c6ca9427eb62a3182610128a58f5b20340d9481a0902c056f8bd9d91c1caa22595046fb8bc47268bfdce3211ef7be6f43dd710a035e7862547079297eebdb35942b6c8b6d1460d619febe80cde479950ecde2a687e61862a4237c7bf292eee772e877de05c387c053c91cf5d048c13cd7e5e10b3541947775d7af7342d221b18cceaa476c92538608223dea350991d0a5c82b42375e678b317007a722804e4b947b4ddde16223d383288307501b083a3913b8286fa785b8e8ca279daa00615e0d87ab4772bfec8f7bbd8e4cb44423c286f8e59fa9319d405c18786c991ce05260b2a96f6fa3b317af14808070a46e26012ac21a98b0effb080eea20b7e5c7e5a3a2640482b30ae0c8ad59b1fda2550208b567f8738ce62d013f8c350
+[vaupie] Starting new HTTP connection (1): localhost:3000
+[vaupie] http://localhost:3000 "POST /VAU/0 HTTP/1.1" 200 265
+[vaupie] User pseudonym: BA1B3198CE1C686DEE28735A7F964FCB-99C1F06B29BC7C01A6DF438FFCC995CE
+[vaupie] b'HTTP/1.1 200 OK\r\ncontent-length: 71\r\nconnection: close\r\ncontent-type: application/fhir+xml\r\ndate: Wed, 23 Sep 2020 18:39:57 GMT\r\n\r\n<Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>'
 HTTP/1.1 200 OK
 content-length: 71
 connection: close
 content-type: application/fhir+xml
-date: Sun, 20 Sep 2020 15:41:52 GMT
+date: Wed, 23 Sep 2020 18:39:57 GMT
 
 <Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>
 ----

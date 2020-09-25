@@ -33,4 +33,4 @@ def encrypt(bob_public_key: ec.EllipticCurvePublicKey, tag: bytearray, plaintext
 def decrypt(response_key: bytes, ciphertext: bytes):
     aesgcm = AESGCM(response_key)
     iv = ciphertext[0:12]
-    return aesgcm.decrypt(ciphertext[0:12], ciphertext[12:], None)
+    return aesgcm.decrypt(iv, ciphertext[12:], None)

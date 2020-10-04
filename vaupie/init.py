@@ -1,6 +1,6 @@
 import logging
 import urllib
-from vaupy.state import EndpointState
+from .state import EndpointState
 import requests
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization

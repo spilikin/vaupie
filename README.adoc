@@ -25,26 +25,27 @@ http --offline get vau/Task "`./vau.py auth`"|./vau.py req
 
 Install https://www.rust-lang.org/learn/get-started[Rust]
 
-.Clone repository from github
+.Generate key pair and certificate usinf openssl 
+[source,bash]
+----
+mkdir .pki
+# generate key pair for VAU
+openssl ecparam -name brainpoolP256r1 -genkey -out .pki/vau-key.pem
+# IMPORTANT: use 'localhost' as Common Name, you can leave other fields empty
+openssl req -new -x509 -key .pki/vau-key.pem -out .pki/vau-cert.pem -days 30
+# display the VAU certificate
+openssl x509 -in .pki/vau-cert.pem -text
+# generate test key pair for IdP
+openssl ecparam -name brainpoolP256r1 -genkey -out .pki/idp-private.pem
+openssl ec -in .pki/idp-private.pem -pubout -out .pki/idp-public.pem
+----
+
+.Clone, build and run the server
 [source,bash]
 ----
 git clone https://github.com/gematik/ref-eRp-FD-Server.git
 cd ref-eRp-FD-Server
-----
-
-
-.Generate key pair and certificate usinf openssl 
-[source,bash]
-----
-# generate key pair for VAU
-openssl ecparam -name brainpoolP256r1 -genkey -out vau-key.pem
-# IMPORTANT: use 'localhost' as Common Name, you can leave other fields empty
-openssl req -new -x509 -key vau-key.pem -out vau-cert.pem -days 30
-# display the VAU certificate
-openssl x509 -in vau-cert.pem -text
-# generate test key pair for IdP
-openssl ecparam -name brainpoolP256r1 -genkey -out idp-private.pem
-openssl ec -in idp-private.pem -pubout -out idp-public.pem
+cargo run -p ref-erx-fd-server -- --key ../.pki/vau-key.pem --cert ../.pki/vau-cert.pem --token file://../.pki/idp-public.pem --tsl https://download.tsl.ti-dienste.de
 
 ----
 
@@ -62,51 +63,52 @@ http localhost:3000/VAUCertificate|openssl x509 -inform der -text
 ----
 
 == Run `🍰 vaupie`
+Install Python Poetry:
+    * https://python-poetry.org/docs/#installation
 
 .Initialise Python virtualenv
 [source,bash]
 ----
-source venv.sh
+poetry install
 ----
-
 
 .Initialise the VAU state
 [source,bash]
 ----
 # ./vau.py init <VAU ENDPOINT> <JWT AUTH TOKEN>
 # WARNING: due to a bug the server will not work if you provide the real JWT. the Token must be any HEX value.
-./vau.py init http://localhost:3000/
+poetry run vaupie init http://localhost:3000/
 ----
 
 .Get all Tasks
 [source,bash]
 ----
-http --offline get vau/Task "`./vau.py auth`"|./vau.py req --verbose
+http --offline get vau/Task "`poetry run vaupie auth`"|poetry run vaupie req --verbose
 ----
 
 .🔥FHIR Response awaits you
 ----
 [vaupie] Verbose logging is on
 [vaupie] Plaintext VAU request:
-[vaupie] 1 0000 42ec0e2163c666cdd6dacdd85f2d6caa 293ddf94c6b1d002f528ae2af72059d2 GET /Task HTTP/1.1
+[vaupie] 1 eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmRlLyIsImF1ZCI6Imh0dHBzOi8vcHJlc2NyaXB0aW9uc2VydmVyLnRlbGVtYXRpay8iLCJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjAxODAyMDQ0LCJuYmYiOjE2MDE4MDIwNDMsImV4cCI6MTYwMTg4ODQ0NCwibm9uY2UiOiI0NTMwNzdkYTlhZDY1MDg0MTlhZTAxOTEyNGU0N2M2YyIsImFjciI6IjEiLCJwcm9mZXNzaW9uT0lEIjoiMS4yLjI3Ni4wLjc2LjQuNDkiLCJnaXZlbl9uYW1lIjoiTWFuZnJlZCIsImZhbWlseV9uYW1lIjoiTXVzdGVybWFubiIsIm9yZ2FuaXphdGlvbk5hbWUiOiJub25lIiwiaWROdW1tZXIiOiIwIiwianRpIjoiMDJkMTI2NWQtM2ZjMy00ZTg5LWJlYzctMzQ3MGFiODU0NTFlIn0.P4JS222lHu8rzJXyQ5sLUOZCbKm04_3sVFUu6PkKZmaiIbDWZOg40qlVK3mkNSXu6b-UOH6Fvha9zOGDRwgSDw a1e49b3b5dfc502cdb66eb96816cfde7 f53338023b924141d94d8f948771d346 GET /Task HTTP/1.1
 User-Agent: HTTPie/2.2.0
 Accept-Encoding: gzip, deflate
 Accept: */*
 Connection: keep-alive
-Authorization: eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmRlLyIsImF1ZCI6Imh0dHBzOi8vcHJlc2NyaXB0aW9uc2VydmVyLnRlbGVtYXRpay8iLCJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjAwODg2MzkzLCJuYmYiOjE2MDA4ODYzOTIsImV4cCI6MTYwMDk3Mjc5Mywibm9uY2UiOiI3MGRiY2MyZjUxM2NhYjRiNDU4ODhiZGUzZjdjOGRhOCIsImFjciI6IjEiLCJwcm9mZXNzaW9uT0lEIjoiMS4yLjI3Ni4wLjc2LjQuNDkiLCJnaXZlbl9uYW1lIjoiTWFuZnJlZCIsImZhbWlseV9uYW1lIjoiTXVzdGVybWFubiIsIm9yZ2FuaXphdGlvbk5hbWUiOiJub25lIiwiaWROdW1tZXIiOiIwIiwianRpIjoiOTg3NDJjZDUtYjIwZC00MWY4LWIxMjYtNjdhZGFhODM4YTY2In0.WkHZTZhRShH6Vq7mw4FOeGnCsOV9ZJPd3SgPprtvqCI5chlYeu0Y3e6BDYY_EUAB4PfXmRiMZpmthZ_Hqayx_Q
+Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2lkcC5leGFtcGxlLmRlLyIsImF1ZCI6Imh0dHBzOi8vcHJlc2NyaXB0aW9uc2VydmVyLnRlbGVtYXRpay8iLCJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNjAxODAyMDQ0LCJuYmYiOjE2MDE4MDIwNDMsImV4cCI6MTYwMTg4ODQ0NCwibm9uY2UiOiI0NTMwNzdkYTlhZDY1MDg0MTlhZTAxOTEyNGU0N2M2YyIsImFjciI6IjEiLCJwcm9mZXNzaW9uT0lEIjoiMS4yLjI3Ni4wLjc2LjQuNDkiLCJnaXZlbl9uYW1lIjoiTWFuZnJlZCIsImZhbWlseV9uYW1lIjoiTXVzdGVybWFubiIsIm9yZ2FuaXphdGlvbk5hbWUiOiJub25lIiwiaWROdW1tZXIiOiIwIiwianRpIjoiMDJkMTI2NWQtM2ZjMy00ZTg5LWJlYzctMzQ3MGFiODU0NTFlIn0.P4JS222lHu8rzJXyQ5sLUOZCbKm04_3sVFUu6PkKZmaiIbDWZOg40qlVK3mkNSXu6b-UOH6Fvha9zOGDRwgSDw
 Host: vau
 
 
-[vaupie] Ciphertext: 019ec12ae4e89e934cb7acf120fcd0da3eac9272fe14941c404aa6b7c23d2b4ed203be8a7029b93a8eb86b3f71b319d6bf1d6213b375751a54f21c81eafd693478e88c0948305c2529f0e19a0ee213c7994553e4cea5d30e3b86d498625488a6c1e748b126ad836acbad62e5abe7a06a41f6cc987fa4fe9990529ab964c3724960700b5f2e9d305bb81f238b80ff98b9ff6f57446f92faa18cee3b8904bfe812220c3db8390c678b2ef7c4b7d90bb45314bc0b3d6dd9a358d023aa0580bc5036381f939e16f7f9c31f453168675181aac05c8cc616aee2c513f5f8e73e7d565a1eac7de3489d2344d7a724f8956a9c9a6f0c442fffff0da7861f517a628a79855292aa491d31022f565b974ed0f0752310a585fb3c183da5cb0fdf59e31f0a7fa5c80aca32fef389eae453ed00378d5fe4d35770c5b01424871f60e39df63e1308d721c43c92ca7ddb2bcd32b33ec2f2dbb2a04719c71bd48e6b5df42cf167c32ff549772e7cfac648f23e90736d8a543ecced3e9552245ec376dcceed3a8d09200bc3916e44c208587bffc33a2c089df10bdeb6b88c4275746f7c5cfce5bad54b5c8dd4401565f0d55b88aa686a3a623f08c7dc263e3c840462c8f0521a703388a7e3160e978f62200bf34566095ccb6af0a79dfd1d050517a104af0635fec951f9c5e06df89038f26bd464f33a5c6aff4dc31c67e6b8e2ffa68caf6dd9f021bc59671aa3c0c5806fca090310b8020e11a6a3059320ab0e5977bcbfe73ad2f9867b7e3e8543a18f13929a259b473482046da09078c558b1162ac70920f55f856121fc273a250dfdd4b664ad3fae45c0bf232e94bfdf2875fa52522a744eefbad44597b76616c2fec7d0fe2b950f5597424d4662e844af8351a429d7cf3c780510930e7754206de6aa04c6ca9427eb62a3182610128a58f5b20340d9481a0902c056f8bd9d91c1caa22595046fb8bc47268bfdce3211ef7be6f43dd710a035e7862547079297eebdb35942b6c8b6d1460d619febe80cde479950ecde2a687e61862a4237c7bf292eee772e877de05c387c053c91cf5d048c13cd7e5e10b3541947775d7af7342d221b18cceaa476c92538608223dea350991d0a5c82b42375e678b317007a722804e4b947b4ddde16223d383288307501b083a3913b8286fa785b8e8ca279daa00615e0d87ab4772bfec8f7bbd8e4cb44423c286f8e59fa9319d405c18786c991ce05260b2a96f6fa3b317af14808070a46e26012ac21a98b0effb080eea20b7e5c7e5a3a2640482b30ae0c8ad59b1fda2550208b567f8738ce62d013f8c350
+[vaupie] Ciphertext: 0156e4f4bc621bc0dcc2c64c316105dd92c80f057354675e3e07a277f5453abd620d0b2d9039e7c89726a1a710095793823ee195c2b7e1e0e86be41362b50bb408f983ba84776130c0c9c54626744f1843d47511989304ade5d5b56350922c9c89b2a518ea2e956dc4b49574344ed12003857f1124dba73e061f0b9349ce16e4d04686a31e818f2451093656bed1f588c306ad97906740b8bc8e1e94557ce8b7dbcd7ac45d4f29fc01783a1165376c2d27b5156b408b8e9e4c5020137a373889598c3376326fbb855e3fa16fdfe7fd854bf4137a99fa7a92a72b8f290db2f20a5affebfa842b5ac7270faf8b9df99c0708e82c304a2c734f983ed81a233d2328d7c96f7ae5493b39c63bc354c211004b93a9604886dce55d59e3329525c9dcde503c8dfe00731bfc6e0059074b88e5c35297312471cb19f2be675d4c89da03b0cb3f1b3b389fe892960987319b7fed02852a1c8ba6c1b1dca86dce81f8ff9a48912122b0022c0eedc849b736b431a6257458fc2c61d8673344cef6cba7818a9918c7daff1b679a562c40d211ff187f5b138442dce06c1dedd88cadcafebc010c4e166412d07253374ac760bef4bad547f0312cc926a2df08941564683b59cab056303e3dd2c812dc0feb525b5197b2ae0d84f4fd6282417177ec78709db2aef4273ecca3a0588ff325af82a86e13b91e4b01abd61678dd45a2481ea746d30310347411de8ce741f8e5e4622e801a9086139448683acb800e8019e82dba83f864e8abcad7d0791bbe6950a8ba4e8a6febf55a7cfebcfe6902a0c03b9c66770b5a0fd7a6220b430dc45d0fd4987c70df212308a3ce27e9fc9a5652ab41e4a6527a3ee6514eac06ab7230d28f337c4e8ef563bd6ca802a37544b43e878c04b56ef2560559e44e7a92e435443343285fcdb6820b1e4aad0e0e1b543dede091c029dc2646554710d19953ed9a6e2d592004a5609dd0f3d5c7e2880c22ad2b13f7937ecacea8127c72833b79744317bb8bae2624948c93a1d61e2b45f40c71d9c3a58d178d32d10ec2609e290f5c4e627a73a0131499f2fa12e8fc12e0b4cfed9cc923dc814fda54fed863e7a76c85fa9e55d877c3b8b5b82ea0f691ac1952d8da32f55bca7ad5c08e05cf23bd1d68b38b24c9d4ef725c41416de6da4987e96e71ca61760f7a30ea92c6c8cd4c59678ad378f98f0bec68c1337b415edaf712e286026a2013bc826f86d5d4028e6dadd78cd814b7bcbbe87b18caa73e92a56f71007a4bd843244ec3968a2cb2ba4490eaa133b676e9d5d1313955e42767feb4fa7326e6ba9d5513e5ebf8472beac69cdc6597fd070556b95a179e563877f3a0d097d34fc1c06c263f0a161b74afa3ed5fd619dcb426f5c4a4a6829048bc1ef120e60f7996f7f2ff1aa13da8d88a9320ce5e8b0d110597f99c4ab3798b6a36f11013743290a184da7af76f8065b742924f75559aa8aafd3a899f08cdbcf5bab68e0b1ff54fa7c5b95d35c5b891b5848c769f26a866e325db13b2a5dc3382f00615b666b828bf80b383a45154556c7ed90008544dc1157d8cd206a0f8d4c78d98d67ae1f07bd514b0b1ab164f8042444b73af695794713cca622cb2cd10fe28ec4c14b0041c7b8e4b0c3eb00a0a84248aa0f71ddfe3144dcb6f2653caa2e9eddf6a6a6475b7435cee9c0b41cf64d44356017fb70fca5b17acacd87a11240c4b37975dfd57dae3b9b1965ab0160e12221661613f8ff55aeb12f70043d1720956d4031301beda421488114f3178832efbbfe902ec77651bd7905c5984934096d15bfab4c982df673ad9474f80274574221480450d983c97d061cfc322bb682743201409b39b99e5918f6218680cb49d0fa66e97880a6a4d1eb08460ee47763c2e3e4ecce30bad99656f8f1296fb205b7eb1177d5560864df9461f2ba6205c77d870a5450f2855e161a9bea5ce03453ddce23d6fee408d3c4429be2b0b4750d63c645037e04ec3b2b5f4ebbb09e735071d6e3d661719a52bd5e74c13ac4716b679fb4e05f68a2fadd9350e3fd2e4504552b9bbb4afd83d9db85e371683a515952c41a2da529a48074265f309e81a0dcd0c5ece75982800a2f3f181430f1882e5ead4e43cb5ccdb2afd0d09ff78513100ddd798264fdcdcf0be52629256b26dd0b242d67c27eadfaadae1f21beb166d76be0d6c9b1bde1259c1fd237e5ae5
 [vaupie] Starting new HTTP connection (1): localhost:3000
-[vaupie] http://localhost:3000 "POST /VAU/0 HTTP/1.1" 200 265
-[vaupie] User pseudonym: BA1B3198CE1C686DEE28735A7F964FCB-99C1F06B29BC7C01A6DF438FFCC995CE
-[vaupie] b'HTTP/1.1 200 OK\r\ncontent-length: 71\r\nconnection: close\r\ncontent-type: application/fhir+xml\r\ndate: Wed, 23 Sep 2020 18:39:57 GMT\r\n\r\n<Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>'
+[vaupie] http://localhost:3000 "POST /VAU/35270155EA874FBDA8A38CB4C79DC8D1-51804E3686D376392401D0BCD71EA311 HTTP/1.1" 200 265
+[vaupie] User pseudonym: 35270155EA874FBDA8A38CB4C79DC8D1-51804E3686D376392401D0BCD71EA311
+[vaupie] b'HTTP/1.1 200 OK\r\ncontent-length: 71\r\nconnection: close\r\ncontent-type: application/fhir+xml\r\ndate: Sun, 04 Oct 2020 09:04:57 GMT\r\n\r\n<Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>'
 HTTP/1.1 200 OK
 content-length: 71
 connection: close
 content-type: application/fhir+xml
-date: Wed, 23 Sep 2020 18:39:57 GMT
+date: Sun, 04 Oct 2020 09:04:57 GMT
 
 <Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>
 ----

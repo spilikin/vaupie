@@ -1,4 +1,4 @@
-from vaupy.state import State, EndpointState, RequestState, StateVersionError
+from vaupie.state import State, EndpointState, RequestState, StateVersionError
 import secrets
 import pytest
 

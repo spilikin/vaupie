@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "vaupie"
+version = "0.3.0"
+description = "Client for gematik VAU-Protocoll used in ePrescription"
+authors = ["Spilikin Software"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+cryptography = "^3.1"
+requests = "^2.24.0"
+python-jose = "^3.2.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "<6.1.0"
+more-itertools = "^8.5.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0a5"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+vaupie = "vaupie.cli:main"

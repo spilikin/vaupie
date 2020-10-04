@@ -7,15 +7,12 @@ import urllib
 import io
 import re
 from cryptography import x509
-import vaupy.crypto as crypto
+import vaupie.crypto as crypto
 
-def post_request(userpseudonym:str, base_url: str, cert: str, file) -> bytes: 
+def post_request(userpseudonym:str, base_url: str, cert: str, auth_token: str, file) -> bytes: 
     request_id = secrets.token_bytes(16).hex()
     response_key = secrets.token_bytes(16).hex()
 
-    #token = state.endpoint.auth_token
-    #TODO, workaround for FD Version 0.2.0
-    auth_token = "0000"
     plaintext = b'1 '+auth_token.encode()+b' '+request_id.encode()+b' '+response_key.encode()+b' '
 
     request_bytes = file.read()

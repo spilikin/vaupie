@@ -72,7 +72,6 @@ poetry install
 [source,bash]
 ----
 # ./vau.py init <VAU ENDPOINT> <JWT AUTH TOKEN>
-# WARNING: due to a bug the server will not work if you provide the real JWT. the Token must be any HEX value.
 poetry run vaupie init http://localhost:3000/
 ----
 

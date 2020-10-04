@@ -16,7 +16,7 @@
 .In Short:
 [source,bash]
 ----
-http --offline get vau/Task "`./vau.py auth`"|./vau.py req
+http --offline get vau/Task "`poetry run vaupie auth`"|poetry run vaupie req
 ----
 
 = Usage

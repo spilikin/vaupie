@@ -45,14 +45,11 @@ openssl ec -in .pki/idp-private.pem -pubout -out .pki/idp-public.pem
 ----
 git clone https://github.com/gematik/ref-eRp-FD-Server.git
 cd ref-eRp-FD-Server
-cargo run -p ref-erx-fd-server -- --key ../.pki/vau-key.pem --cert ../.pki/vau-cert.pem --token file://../.pki/idp-public.pem --tsl https://download.tsl.ti-dienste.de
-
-----
-
-.Start server 
-[source,bash]
-----
-cargo run -p ref-erx-fd-server -- --key vau-key.pem --cert vau-cert.pem --token file://./idp-public.pem
+cargo run -p ref-erx-fd-server -- \
+    --key ../.pki/vau-key.pem \
+    --cert ../.pki/vau-cert.pem \
+    --token file://../.pki/idp-public.pem \
+    --tsl https://download.tsl.ti-dienste.de
 ----
 
 .Test if server works

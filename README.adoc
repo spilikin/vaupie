@@ -60,8 +60,7 @@ http localhost:3000/VAUCertificate|openssl x509 -inform der -text
 ----
 
 == Run `🍰 vaupie`
-Install Python Poetry:
-    * https://python-poetry.org/docs/#installation
+Install Python Poetry https://python-poetry.org/docs/#installation
 
 .Initialise Python virtualenv
 [source,bash]

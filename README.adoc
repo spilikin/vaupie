@@ -107,3 +107,30 @@ date: Sun, 04 Oct 2020 09:04:57 GMT
 
 <Bundle xmlns="http://hl7.org/fhir"><type value="collection"/></Bundle>
 ----
+
+.Create Task for eRezept
+[source,bash]
+----
+http --offline post 'vau/Task/$create' "content-type:application/fhir+xml; charset=UTF-8" "`poetry run vaupie auth`" <<EOF | poetry run vaupie req
+<Parameters xmlns="http://hl7.org/fhir">
+  <parameter>
+    <name value="workflowType"/>
+    <valueCoding>
+      <system value="https://gematik.de/fhir/CodeSystem/Flowtype"/>
+      <code value="160"/>
+    </valueCoding>
+  </parameter>
+</Parameters>
+EOF
+----
+
+.Response
+----
+HTTP/1.1 200 OK
+content-length: 1044
+connection: close
+content-type: application/fhir+xml
+date: Tue, 06 Oct 2020 07:09:19 GMT
+
+<Task xmlns="http://hl7.org/fhir"><id value="13814003-1dd2-11b2-802a-0ae8f822cc5c"/><meta><profile value="https://gematik.de/fhir/StructureDefinition/eRxTask"/></meta><extension url="https://gematik.de/fhir/StructureDefinition/PrescriptionType"><valueCoding><system value="https://gematik.de/fhir/CodeSystem/Flowtype"/><code value="160"/><display value="Muster 16 (Apothekenpflichtige Arzneimittel)"/></valueCoding></extension><identifier><system value="https://gematik.de/fhir/Namingsystem/PrescriptionID"/><value value="160.000.000.000.123.76"/></identifier><identifier><system value="https://gematik.de/fhir/Namingsystem/AccessCode"/><value value="A078BF13A76E49A8306F4C6AF152C9715D1C94F0B97E6EDF8E5C549CA45C363"/></identifier><status value="draft"/><intent value="order"/><authoredOn value="2020-10-06T07:09:19.088410+00:00"/><lastModified value="2020-10-06T07:09:19.088711+00:00"/><performerType><coding><system value="urn:ietf:rfc:3986"/><code value="urn:oid:1.2.276.0.76.4.54"/><display value="Apotheke"/></coding></performerType></Task>
+----
